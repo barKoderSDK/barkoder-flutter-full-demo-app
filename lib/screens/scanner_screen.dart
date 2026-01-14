@@ -45,6 +45,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
     _loadSavedSettings();
   }
 
+  @override
+  void dispose() {
+    _barkoder?.stopScanning();
+    super.dispose();
+  }
+
   void _onBarkoderViewCreated(Barkoder barkoder) {
     _barkoder = barkoder;
     _configureBarkoderView();
@@ -134,7 +140,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
       _barkoder!.setThresholdBetweenDuplicatesScans(threshold);
     }
 
-    _startScanning();
+    if (!_isScanningPaused) {
+      _startScanning();
+    }
   }
 
   void _startScanning() {
