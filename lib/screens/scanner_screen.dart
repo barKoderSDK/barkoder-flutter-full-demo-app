@@ -119,6 +119,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     _barkoder!.setCloseSessionOnResultEnabled(!isContinuous);
     _barkoder!.setImageResultEnabled(true);
     _barkoder!.setBarcodeThumbnailOnResultEnabled(true);
+    _barkoder!.setLocationInImageResultEnabled(!isContinuous);
     _barkoder!.setMaximumResultsCount(200);
 
     if (_settings['regionOfInterest'] == true) {

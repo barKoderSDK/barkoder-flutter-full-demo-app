@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import 'package:go_router/go_router.dart';
 import '../../models/history_item.dart';
+import '../../services/mrz_parser.dart';
 
 class ScanResultCard extends StatelessWidget {
   final HistoryItem item;
@@ -18,6 +19,31 @@ class ScanResultCard extends StatelessWidget {
     required this.onExportCSV,
     required this.onSearch,
   });
+
+  String _getDisplayText(HistoryItem item) {
+    if (MRZParser.isMRZ(item.type)) {
+      final fields = MRZParser.parse(item.text);
+      String? firstName;
+      String? lastName;
+      
+      for (final field in fields) {
+        if (field['id'] == 'first_name') {
+          firstName = field['value'];
+        } else if (field['id'] == 'last_name') {
+          lastName = field['value'];
+        }
+      }
+      
+      if (firstName != null && lastName != null) {
+        return '$firstName $lastName';
+      } else if (firstName != null) {
+        return firstName;
+      } else if (lastName != null) {
+        return lastName;
+      }
+    }
+    return item.text;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +105,7 @@ class ScanResultCard extends StatelessWidget {
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              item.text,
+                              _getDisplayText(item),
                               style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w600,

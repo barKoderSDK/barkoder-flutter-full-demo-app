@@ -17,9 +17,7 @@ class SettingsHelper {
           {'id': 'datamatrix', 'label': 'Data Matrix'},
         ];
       case ScannerModes.mrz:
-        return [
-          {'id': 'idDocument', 'label': 'ID Document'},
-        ];
+        return [];
       case ScannerModes.deblur:
         return [
           {'id': 'upcA', 'label': 'UPC-A'},
@@ -28,9 +26,7 @@ class SettingsHelper {
           {'id': 'ean8', 'label': 'EAN-8'},
         ];
       case ScannerModes.dotcode:
-        return [
-          {'id': 'dotcode', 'label': 'DotCode'},
-        ];
+        return [];
       case ScannerModes.arMode:
         return [
           {'id': 'qr', 'label': 'QR'},

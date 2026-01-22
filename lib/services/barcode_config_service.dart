@@ -78,6 +78,7 @@ class BarcodeConfigService {
         barkoder.setEnableMisshaped1DEnabled(true);
         break;
       case ScannerModes.dotcode:
+        barkoder.setBarcodeTypeEnabled(BarcodeType.dotcode, true);
         barkoder.setRegionOfInterest(30, 40, 40, 9);
         barkoder.setRegionOfInterestVisible(true);
         barkoder.setDecodingSpeed(DecodingSpeed.slow);

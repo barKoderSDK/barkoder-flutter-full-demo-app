@@ -286,7 +286,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final items = <Widget>[];
     final mode = widget.mode;
 
-    if (!_isSpecialMode(mode)) {
+    if (mode == ScannerModes.anyscan) {
       items.add(_buildCompositeModeSetting());
     }
 
