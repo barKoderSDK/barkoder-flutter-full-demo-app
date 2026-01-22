@@ -28,35 +28,76 @@ class SettingDropdown extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: InkWell(
         onTap: () {
-          showModalBottomSheet(
+          showDialog(
             context: context,
-            builder: (context) => Container(
-              padding: const EdgeInsets.all(20),
-              child: Column(
+            builder: (context) => AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+              title: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.black87,
+                ),
+              ),
+              contentPadding: const EdgeInsets.fromLTRB(0, 10, 0, 0),
+              content: Column(
                 mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
+                children: options.map((option) {
+                  final isSelected = value == option['value'];
+                  return InkWell(
+                    onTap: () {
+                      onChanged(option['value']);
+                      Navigator.pop(context);
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 0,
+                      ),
+                      child: Row(
+                        children: [
+                          Radio<dynamic>(
+                            value: option['value'],
+                            groupValue: value,
+                            activeColor: const Color(0xFFE52E4C),
+                            onChanged: (val) {
+                              onChanged(val);
+                              Navigator.pop(context);
+                            },
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            option['label'],
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: isSelected
+                                  ? Colors.black87
+                                  : Colors.black54,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text(
+                    'CANCEL',
+                    style: TextStyle(
+                      color: Color(0xFFE52E4C),
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  ...options.map((option) {
-                    return ListTile(
-                      title: Text(option['label']),
-                      trailing: value == option['value']
-                          ? const Icon(Icons.check, color: Color(0xFFE52E4C))
-                          : null,
-                      onTap: () {
-                        onChanged(option['value']);
-                        Navigator.pop(context);
-                      },
-                    );
-                  }),
-                ],
-              ),
+                ),
+              ],
             ),
           );
         },
@@ -74,7 +115,11 @@ class SettingDropdown extends StatelessWidget {
                   style: const TextStyle(fontSize: 15, color: Colors.black54),
                 ),
                 const SizedBox(width: 8),
-                const Icon(Icons.chevron_right, size: 20, color: Colors.black54),
+                const Icon(
+                  Icons.chevron_right,
+                  size: 20,
+                  color: Colors.black54,
+                ),
               ],
             ),
           ],

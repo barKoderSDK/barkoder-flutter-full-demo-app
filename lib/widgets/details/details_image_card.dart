@@ -1,13 +1,45 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:convert';
 
 class DetailsImageCard extends StatelessWidget {
   final String? imagePath;
 
-  const DetailsImageCard({
-    super.key,
-    required this.imagePath,
-  });
+  const DetailsImageCard({super.key, required this.imagePath});
+
+  Widget _buildImage() {
+    if (imagePath == null) {
+      return Icon(Icons.image_outlined, size: 80, color: Colors.grey.shade300);
+    }
+
+    // Check if it's a base64 data URI
+    if (imagePath!.startsWith('data:image')) {
+      try {
+        final base64String = imagePath!.split(',')[1];
+        final bytes = base64Decode(base64String);
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(8),
+          child: Image.memory(bytes, fit: BoxFit.contain, height: 180),
+        );
+      } catch (e) {
+        return Icon(
+          Icons.image_outlined,
+          size: 80,
+          color: Colors.grey.shade300,
+        );
+      }
+    }
+
+    // Check if it's a file path
+    if (File(imagePath!).existsSync()) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.file(File(imagePath!), fit: BoxFit.contain, height: 180),
+      );
+    }
+
+    return Icon(Icons.image_outlined, size: 80, color: Colors.grey.shade300);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,20 +57,7 @@ class DetailsImageCard extends StatelessWidget {
           ),
         ],
       ),
-      child: imagePath != null && File(imagePath!).existsSync()
-          ? ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: Image.file(
-                File(imagePath!),
-                fit: BoxFit.contain,
-                height: 180,
-              ),
-            )
-          : Icon(
-              Icons.image_outlined,
-              size: 80,
-              color: Colors.grey.shade300,
-            ),
+      child: _buildImage(),
     );
   }
 }

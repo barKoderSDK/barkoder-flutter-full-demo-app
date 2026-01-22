@@ -321,6 +321,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
 
+    // Add AR Mode specific settings
+    if (mode == ScannerModes.arMode) {
+      items.addAll([
+        _buildARModeSetting(),
+        _buildARLocationTypeSetting(),
+        _buildARHeaderShowModeSetting(),
+        _buildAROverlayRefreshSetting(),
+        _buildARDoubleTapToFreezeSetting(),
+      ]);
+    }
+
     return items;
   }
 
@@ -536,5 +547,93 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     return items;
+  }
+
+  // AR Mode specific settings
+  Widget _buildARModeSetting() {
+    return SettingDropdown(
+      label: 'AR Mode',
+      value: widget.settings['arMode'] ?? BarkoderARMode.interactiveEnabled,
+      options: [
+        {'label': 'Off', 'value': BarkoderARMode.off},
+        {
+          'label': 'Interactive Disabled',
+          'value': BarkoderARMode.interactiveDisabled,
+        },
+        {
+          'label': 'Interactive Enabled',
+          'value': BarkoderARMode.interactiveEnabled,
+        },
+        {'label': 'Non-Interactive', 'value': BarkoderARMode.nonInteractive},
+      ],
+      onChanged: (value) {
+        widget.onUpdateSetting('arMode', value);
+        setState(() {});
+      },
+    );
+  }
+
+  Widget _buildARLocationTypeSetting() {
+    return SettingDropdown(
+      label: 'Location Type',
+      value:
+          widget.settings['arLocationType'] ??
+          BarkoderARLocationType.boundingBox,
+      options: [
+        {'label': 'None', 'value': BarkoderARLocationType.none},
+        {'label': 'Tight', 'value': BarkoderARLocationType.tight},
+        {'label': 'Bounding Box', 'value': BarkoderARLocationType.boundingBox},
+      ],
+      onChanged: (value) {
+        widget.onUpdateSetting('arLocationType', value);
+        setState(() {});
+      },
+    );
+  }
+
+  Widget _buildARHeaderShowModeSetting() {
+    return SettingDropdown(
+      label: 'Header Show Mode',
+      value:
+          widget.settings['arHeaderShowMode'] ??
+          BarkoderARHeaderShowMode.onSelected,
+      options: [
+        {'label': 'Never', 'value': BarkoderARHeaderShowMode.never},
+        {'label': 'Always', 'value': BarkoderARHeaderShowMode.always},
+        {'label': 'On Selected', 'value': BarkoderARHeaderShowMode.onSelected},
+      ],
+      onChanged: (value) {
+        widget.onUpdateSetting('arHeaderShowMode', value);
+        setState(() {});
+      },
+    );
+  }
+
+  Widget _buildAROverlayRefreshSetting() {
+    return SettingDropdown(
+      label: 'Overlay Refresh',
+      value:
+          widget.settings['arOverlayRefresh'] ??
+          BarkoderAROverlayRefresh.normal,
+      options: [
+        {'label': 'Smooth', 'value': BarkoderAROverlayRefresh.smooth},
+        {'label': 'Normal', 'value': BarkoderAROverlayRefresh.normal},
+      ],
+      onChanged: (value) {
+        widget.onUpdateSetting('arOverlayRefresh', value);
+        setState(() {});
+      },
+    );
+  }
+
+  Widget _buildARDoubleTapToFreezeSetting() {
+    return SettingSwitch(
+      label: 'Double Tap to Freeze',
+      value: widget.settings['arDoubleTapToFreeze'] ?? true,
+      onChanged: (value) {
+        widget.onUpdateSetting('arDoubleTapToFreeze', value);
+        setState(() {});
+      },
+    );
   }
 }

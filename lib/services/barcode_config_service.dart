@@ -89,10 +89,23 @@ class BarcodeConfigService {
         barkoder.setBarkoderResolution(BarkoderResolution.HD);
         barkoder.setDecodingSpeed(DecodingSpeed.slow);
         barkoder.setCloseSessionOnResultEnabled(false);
-        barkoder.setARMode(BarkoderARMode.interactiveEnabled);
+        barkoder.setARMode(
+          settings['arMode'] ?? BarkoderARMode.interactiveEnabled,
+        );
+        barkoder.setARLocationType(
+          settings['arLocationType'] ?? BarkoderARLocationType.boundingBox,
+        );
+        barkoder.setARHeaderShowMode(
+          settings['arHeaderShowMode'] ?? BarkoderARHeaderShowMode.onSelected,
+        );
+        barkoder.setAROverlayRefresh(
+          settings['arOverlayRefresh'] ?? BarkoderAROverlayRefresh.normal,
+        );
+        barkoder.setARDoubleTapToFreezeEnabled(
+          settings['arDoubleTapToFreeze'] ?? true,
+        );
         barkoder.setARSelectedLocationColor('#00FF00');
         barkoder.setARNonSelectedLocationColor('#FF0000');
-        barkoder.setARHeaderShowMode(BarkoderARHeaderShowMode.onSelected);
         break;
       default:
         barkoder.setDecodingSpeed(DecodingSpeed.normal);

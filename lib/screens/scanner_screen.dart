@@ -80,6 +80,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
         'continuousThreshold': 5,
         'decodingSpeed': DecodingSpeed.normal,
         'resolution': BarkoderResolution.HD,
+        // AR Mode specific settings
+        'arMode': BarkoderARMode.interactiveEnabled,
+        'arLocationType': BarkoderARLocationType.boundingBox,
+        'arHeaderShowMode': BarkoderARHeaderShowMode.onSelected,
+        'arOverlayRefresh': BarkoderAROverlayRefresh.normal,
+        'arDoubleTapToFreeze': true,
       };
     }
 
@@ -87,9 +93,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
         .where((entry) => entry.value)
         .map((entry) => entry.key)
         .toList();
-    _enabledBarcodeTypes = BarcodeConfigService.getEnabledTypesDisplayNames(
-      enabledTypeIds,
-    );
+    
+    setState(() {
+      _enabledBarcodeTypes = BarcodeConfigService.getEnabledTypesDisplayNames(
+        enabledTypeIds,
+      );
+    });
 
     final isContinuous = BarcodeConfigService.isContinuousMode(
       widget.mode,
@@ -110,9 +119,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
     _barkoder!.setCloseSessionOnResultEnabled(!isContinuous);
     _barkoder!.setImageResultEnabled(true);
     _barkoder!.setBarcodeThumbnailOnResultEnabled(true);
+    _barkoder!.setMaximumResultsCount(200);
 
     if (_settings['regionOfInterest'] == true) {
-      _barkoder!.setRegionOfInterest(20, 30, 60, 40);
+      _barkoder!.setRegionOfInterest(5, 15, 90, 70);
     }
 
     _barkoder!.setEnableComposite(_settings['compositeMode'] == true ? 1 : 0);
@@ -309,7 +319,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
   void _toggleCamera() {
     setState(() => _isFrontCamera = !_isFrontCamera);
-    _barkoder?.setCamera((_isFrontCamera ? 1 : 0) as BarkoderCameraPosition);
+    _barkoder?.setCamera(
+      _isFrontCamera
+          ? BarkoderCameraPosition.FRONT
+          : BarkoderCameraPosition.BACK,
+    );
   }
 
   void _applySettingChange(String key, dynamic value) {
@@ -326,8 +340,14 @@ class _ScannerScreenState extends State<ScannerScreen> {
         _barkoder!.setLocationInPreviewEnabled(value);
         break;
       case 'regionOfInterest':
-        if (value) _barkoder!.setRegionOfInterest(20, 30, 60, 40);
         _barkoder!.setRegionOfInterestVisible(value);
+        if (value) {
+          _barkoder!.setRegionOfInterest(5, 15, 90, 70);
+        } else {
+          _barkoder!.setRegionOfInterest(0, 0, 100, 100);
+        }
+        _barkoder!.stopScanning();
+        _startScanning();
         break;
       case 'beepOnSuccess':
         _barkoder!.setBeepOnSuccessEnabled(value);
@@ -359,6 +379,21 @@ class _ScannerScreenState extends State<ScannerScreen> {
       case 'resolution':
         _barkoder!.setBarkoderResolution(value);
         break;
+      case 'arMode':
+        _barkoder!.setARMode(value);
+        break;
+      case 'arLocationType':
+        _barkoder!.setARLocationType(value);
+        break;
+      case 'arHeaderShowMode':
+        _barkoder!.setARHeaderShowMode(value);
+        break;
+      case 'arOverlayRefresh':
+        _barkoder!.setAROverlayRefresh(value);
+        break;
+      case 'arDoubleTapToFreeze':
+        _barkoder!.setARDoubleTapToFreezeEnabled(value);
+        break;
     }
   }
 
@@ -384,6 +419,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
         'continuousThreshold': 5,
         'decodingSpeed': DecodingSpeed.normal,
         'resolution': BarkoderResolution.HD,
+        // AR Mode specific settings
+        'arMode': BarkoderARMode.interactiveEnabled,
+        'arLocationType': BarkoderARLocationType.boundingBox,
+        'arHeaderShowMode': BarkoderARHeaderShowMode.onSelected,
+        'arOverlayRefresh': BarkoderAROverlayRefresh.normal,
+        'arDoubleTapToFreeze': true,
       };
       _enabledBarcodeTypes = BarcodeConfigService.getEnabledTypesDisplayNames(
         enabledTypes,
@@ -408,6 +449,23 @@ class _ScannerScreenState extends State<ScannerScreen> {
             k,
             'BarkoderResolution.${v.toString().split('.').last}',
           );
+        } else if (v is BarkoderARMode) {
+          return MapEntry(k, 'BarkoderARMode.${v.toString().split('.').last}');
+        } else if (v is BarkoderARLocationType) {
+          return MapEntry(
+            k,
+            'BarkoderARLocationType.${v.toString().split('.').last}',
+          );
+        } else if (v is BarkoderARHeaderShowMode) {
+          return MapEntry(
+            k,
+            'BarkoderARHeaderShowMode.${v.toString().split('.').last}',
+          );
+        } else if (v is BarkoderAROverlayRefresh) {
+          return MapEntry(
+            k,
+            'BarkoderAROverlayRefresh.${v.toString().split('.').last}',
+          );
         }
         return MapEntry(k, v);
       }),
@@ -428,29 +486,65 @@ class _ScannerScreenState extends State<ScannerScreen> {
             (data['enabledTypes'] as Map<String, dynamic>).map(
               (k, v) => MapEntry(k, v as bool),
             );
-        final Map<String, dynamic> settings =
-            (data['settings'] as Map<String, dynamic>).map((k, v) {
-              if (v is String && v.startsWith('DecodingSpeed.')) {
-                final enumValue = v.split('.').last;
-                return MapEntry(
-                  k,
-                  DecodingSpeed.values.firstWhere(
-                    (e) => e.toString().split('.').last == enumValue,
-                    orElse: () => DecodingSpeed.normal,
-                  ),
-                );
-              } else if (v is String && v.startsWith('BarkoderResolution.')) {
-                final enumValue = v.split('.').last;
-                return MapEntry(
-                  k,
-                  BarkoderResolution.values.firstWhere(
-                    (e) => e.toString().split('.').last == enumValue,
-                    orElse: () => BarkoderResolution.HD,
-                  ),
-                );
-              }
-              return MapEntry(k, v);
-            });
+        final Map<String, dynamic>
+        settings = (data['settings'] as Map<String, dynamic>).map((k, v) {
+          if (v is String && v.startsWith('DecodingSpeed.')) {
+            final enumValue = v.split('.').last;
+            return MapEntry(
+              k,
+              DecodingSpeed.values.firstWhere(
+                (e) => e.toString().split('.').last == enumValue,
+                orElse: () => DecodingSpeed.normal,
+              ),
+            );
+          } else if (v is String && v.startsWith('BarkoderResolution.')) {
+            final enumValue = v.split('.').last;
+            return MapEntry(
+              k,
+              BarkoderResolution.values.firstWhere(
+                (e) => e.toString().split('.').last == enumValue,
+                orElse: () => BarkoderResolution.HD,
+              ),
+            );
+          } else if (v is String && v.startsWith('BarkoderARMode.')) {
+            final enumValue = v.split('.').last;
+            return MapEntry(
+              k,
+              BarkoderARMode.values.firstWhere(
+                (e) => e.toString().split('.').last == enumValue,
+                orElse: () => BarkoderARMode.interactiveEnabled,
+              ),
+            );
+          } else if (v is String && v.startsWith('BarkoderARLocationType.')) {
+            final enumValue = v.split('.').last;
+            return MapEntry(
+              k,
+              BarkoderARLocationType.values.firstWhere(
+                (e) => e.toString().split('.').last == enumValue,
+                orElse: () => BarkoderARLocationType.boundingBox,
+              ),
+            );
+          } else if (v is String && v.startsWith('BarkoderARHeaderShowMode.')) {
+            final enumValue = v.split('.').last;
+            return MapEntry(
+              k,
+              BarkoderARHeaderShowMode.values.firstWhere(
+                (e) => e.toString().split('.').last == enumValue,
+                orElse: () => BarkoderARHeaderShowMode.onSelected,
+              ),
+            );
+          } else if (v is String && v.startsWith('BarkoderAROverlayRefresh.')) {
+            final enumValue = v.split('.').last;
+            return MapEntry(
+              k,
+              BarkoderAROverlayRefresh.values.firstWhere(
+                (e) => e.toString().split('.').last == enumValue,
+                orElse: () => BarkoderAROverlayRefresh.normal,
+              ),
+            );
+          }
+          return MapEntry(k, v);
+        });
 
         setState(() {
           _enabledTypesMap = enabledTypes;
@@ -478,6 +572,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
             'continuousThreshold': 5,
             'decodingSpeed': DecodingSpeed.normal,
             'resolution': BarkoderResolution.HD,
+            // AR Mode specific settings
+            'arMode': BarkoderARMode.interactiveEnabled,
+            'arLocationType': BarkoderARLocationType.boundingBox,
+            'arHeaderShowMode': BarkoderARHeaderShowMode.onSelected,
+            'arOverlayRefresh': BarkoderAROverlayRefresh.normal,
+            'arDoubleTapToFreeze': true,
           };
         });
       }
@@ -501,6 +601,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     );
 
     return Scaffold(
+      backgroundColor: Colors.black,
       body: Stack(
         children: [
           BarkoderView(
