@@ -67,7 +67,6 @@ class BarcodeConfigService {
         barkoder.setEnableMisshaped1DEnabled(settings['scanDeformed'] ?? true);
         break;
       case ScannerModes.dpm:
-        barkoder.setBarcodeTypeEnabled(BarcodeType.datamatrix, true);
         barkoder.setDatamatrixDpmModeEnabled(true);
         barkoder.setRegionOfInterest(40, 40, 20, 10);
         barkoder.setRegionOfInterestVisible(true);
@@ -79,7 +78,6 @@ class BarcodeConfigService {
         barkoder.setEnableMisshaped1DEnabled(true);
         break;
       case ScannerModes.dotcode:
-        barkoder.setBarcodeTypeEnabled(BarcodeType.dotcode, true);
         barkoder.setRegionOfInterest(30, 40, 40, 9);
         barkoder.setRegionOfInterestVisible(true);
         barkoder.setDecodingSpeed(DecodingSpeed.slow);
