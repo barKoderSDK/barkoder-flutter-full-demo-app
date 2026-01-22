@@ -14,7 +14,6 @@ import '../constants/modes.dart';
 import '../widgets/scanner/scanner_top_bar.dart';
 import '../widgets/scanner/scanner_overlay.dart';
 import '../widgets/scanner/continue_scanning_banner.dart';
-import '../widgets/scanner/scanned_items_list.dart';
 import '../widgets/scanner/scan_result_card.dart';
 import '../widgets/scanner/scanner_controls.dart';
 
@@ -645,11 +644,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
             },
             onResetConfig: _resetConfig,
           ),
-          ScannedItemsList(items: _scannedItems),
           if (_scannedItems.isNotEmpty)
             ScanResultCard(
               item: _scannedItems.first,
-              totalCount: _scannedItems.length,
+              totalCount: _scannedItems.where((item) => item.text == _scannedItems.first.text).length,
+              totalSessionCount: _scannedItems.length,
               onCopy: () => _copyToClipboard(_scannedItems.first.text),
               onExportCSV: _exportToCSV,
               onSearch: () => _searchBarcode(_scannedItems.first.text),

@@ -7,6 +7,7 @@ import '../../services/mrz_parser.dart';
 class ScanResultCard extends StatelessWidget {
   final HistoryItem item;
   final int totalCount;
+  final int totalSessionCount;
   final VoidCallback onCopy;
   final VoidCallback onExportCSV;
   final VoidCallback onSearch;
@@ -15,6 +16,7 @@ class ScanResultCard extends StatelessWidget {
     super.key,
     required this.item,
     required this.totalCount,
+    required this.totalSessionCount,
     required this.onCopy,
     required this.onExportCSV,
     required this.onSearch,
@@ -68,7 +70,7 @@ class ScanResultCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '$totalCount result${totalCount == 1 ? "" : "s"} found ($totalCount total)',
+                '$totalCount result${totalCount == 1 ? "" : "s"} found ($totalSessionCount total)',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
@@ -115,10 +117,24 @@ class ScanResultCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const Icon(
-                        Icons.info_outline,
-                        size: 20,
-                        color: Colors.black54,
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            '×$totalCount',
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF6C757D),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          const Icon(
+                            Icons.info_outline,
+                            size: 20,
+                            color: Colors.black54,
+                          ),
+                        ],
                       ),
                     ],
                   ),
