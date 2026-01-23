@@ -335,15 +335,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return items;
   }
 
-  bool _isSpecialMode(String mode) {
-    return mode == ScannerModes.dpm ||
-        mode == ScannerModes.arMode ||
-        mode == ScannerModes.multiscan ||
-        mode == ScannerModes.vin ||
-        mode == ScannerModes.mrz ||
-        mode == ScannerModes.dotcode;
-  }
-
   bool _isSpecialModeExcluding(List<String> excluded) {
     final mode = widget.mode;
     final specialModes = {

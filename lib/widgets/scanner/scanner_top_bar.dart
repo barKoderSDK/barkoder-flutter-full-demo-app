@@ -10,6 +10,8 @@ class ScannerTopBar extends StatelessWidget {
   final Function(String, bool) onToggleType;
   final Function(String, dynamic) onUpdateSetting;
   final VoidCallback onResetConfig;
+  final VoidCallback? onOpenSettings;
+  final VoidCallback? onCloseSettings;
 
   const ScannerTopBar({
     super.key,
@@ -19,6 +21,8 @@ class ScannerTopBar extends StatelessWidget {
     required this.onToggleType,
     required this.onUpdateSetting,
     required this.onResetConfig,
+    this.onOpenSettings,
+    this.onCloseSettings,
   });
 
   @override
@@ -44,6 +48,7 @@ class ScannerTopBar extends StatelessWidget {
               IconButton(
                 icon: const Icon(Icons.settings, color: Colors.white, size: 28),
                 onPressed: () async {
+                  onOpenSettings?.call();
                   await Navigator.push(
                     context,
                     MaterialPageRoute(
@@ -57,6 +62,7 @@ class ScannerTopBar extends StatelessWidget {
                       ),
                     ),
                   );
+                  onCloseSettings?.call();
                 },
               ),
             ],

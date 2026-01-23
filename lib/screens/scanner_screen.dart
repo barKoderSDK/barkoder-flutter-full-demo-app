@@ -168,7 +168,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
     final timestamp = DateTime.now().millisecondsSinceEpoch;
 
     if (!BarcodeConfigService.isContinuousMode(widget.mode, _settings)) {
-      _barkoder?.stopScanning();
+      _barkoder?.pauseScanning();
     }
 
     final item = HistoryItem(
@@ -590,7 +590,18 @@ class _ScannerScreenState extends State<ScannerScreen> {
       _scannedItems.clear();
       _fullCameraImageBytes = null;
     });
-    _startScanning();
+    // Start scanning again after pause (camera session remains active)
+    _barkoder?.startScanning((result) => _handleScanResult(result));
+  }
+
+  void _pauseScanningForSettings() {
+    _barkoder?.pauseScanning();
+  }
+
+  void _resumeScanningFromSettings() {
+    if (!_isScanningPaused) {
+      _barkoder?.startScanning((result) => _handleScanResult(result));
+    }
   }
 
   @override
@@ -619,6 +630,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
             mode: widget.mode,
             enabledTypes: _enabledTypesMap,
             settings: _settings,
+            onOpenSettings: _pauseScanningForSettings,
+            onCloseSettings: _resumeScanningFromSettings,
             onToggleType: (typeId, enabled) {
               setState(() {
                 _enabledTypesMap[typeId] = enabled;
@@ -644,7 +657,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             },
             onResetConfig: _resetConfig,
           ),
-          if (_scannedItems.isNotEmpty)
+          if (_scannedItems.isNotEmpty && widget.mode != ScannerModes.arMode)
             ScanResultCard(
               item: _scannedItems.first,
               totalCount: _scannedItems.where((item) => item.text == _scannedItems.first.text).length,
@@ -653,7 +666,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
               onExportCSV: _exportToCSV,
               onSearch: () => _searchBarcode(_scannedItems.first.text),
             ),
-          if (_scannedItems.isEmpty)
+          if (_scannedItems.isEmpty || widget.mode == ScannerModes.arMode)
             ScannerControls(
               enabledBarcodeTypes: _enabledBarcodeTypes,
               zoomLevel: _zoomLevel,
