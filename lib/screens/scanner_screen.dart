@@ -31,6 +31,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   List<HistoryItem> _scannedItems = [];
   bool _isFlashOn = false;
   bool _isScanningPaused = false;
+  bool _isSheetVisible = true;
   double _zoomLevel = 1.0;
   bool _isFrontCamera = false;
   List<String> _enabledBarcodeTypes = [];
@@ -69,7 +70,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         'locationInPreview': true,
         'regionOfInterest': false,
         'beepOnSuccess': true,
-        'vibrateOnSuccess': true,
+        'vibrateOnSuccess': false,
         'scanBlurred': widget.mode == ScannerModes.deblur,
         'scanDeformed': widget.mode == ScannerModes.vin,
         'continuousScanning': BarcodeConfigService.isContinuousMode(
@@ -176,10 +177,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
       type: type,
       image: null,
       timestamp: timestamp,
+      count: result.decoderResults.length,
     );
 
     setState(() {
       _scannedItems.insert(0, item);
+      _isSheetVisible = true;
       if (!BarcodeConfigService.isContinuousMode(widget.mode, _settings)) {
         _isScanningPaused = true;
         _fullCameraImageBytes = result.resultImage;
@@ -244,6 +247,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             type: _scannedItems[0].type,
             image: imagePath,
             timestamp: _scannedItems[0].timestamp,
+            count: _scannedItems[0].count,
           );
         });
       }
@@ -340,13 +344,29 @@ class _ScannerScreenState extends State<ScannerScreen> {
         _barkoder!.setLocationInPreviewEnabled(value);
         break;
       case 'regionOfInterest':
-        _barkoder!.setRegionOfInterestVisible(value);
-        if (value) {
-          _barkoder!.setRegionOfInterest(5, 15, 90, 70);
-        } else {
-          _barkoder!.setRegionOfInterest(0, 0, 100, 100);
-        }
         _barkoder!.stopScanning();
+        
+        if (value) {
+          if (widget.mode == ScannerModes.vin) {
+            _barkoder!.setRegionOfInterest(0, 35, 100, 30);
+          } else if (widget.mode == ScannerModes.dpm) {
+            _barkoder!.setRegionOfInterest(40, 40, 20, 10);
+          } else if (widget.mode == ScannerModes.dotcode) {
+            _barkoder!.setRegionOfInterest(30, 40, 40, 9);
+          } else if (widget.mode == ScannerModes.anyscan ||
+                     widget.mode == ScannerModes.mode1D ||
+                     widget.mode == ScannerModes.mode2D ||
+                     widget.mode == ScannerModes.continuous ||
+                     widget.mode == ScannerModes.multiscan) {
+            _barkoder!.setRegionOfInterest(3, 20, 94, 60);
+          } else {
+            _barkoder!.setRegionOfInterest(3, 20, 94, 60);
+          }
+          _barkoder!.setRegionOfInterestVisible(true);
+        } else {
+          _barkoder!.setRegionOfInterestVisible(false);
+        }
+        
         _startScanning();
         break;
       case 'beepOnSuccess':
@@ -360,6 +380,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
         break;
       case 'scanDeformed':
         _barkoder!.setEnableMisshaped1DEnabled(value);
+        break;
+      case 'enableOCR':
+        if (widget.mode == ScannerModes.vin) {
+          _barkoder!.setCustomOption('enable_ocr_functionality', value ? 1 : 0);
+          _barkoder!.setBarcodeTypeEnabled(BarcodeType.ocrText, value);
+        }
         break;
       case 'continuousScanning':
         _barkoder!.setCloseSessionOnResultEnabled(!value);
@@ -409,9 +435,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
         'locationInPreview': true,
         'regionOfInterest': false,
         'beepOnSuccess': true,
-        'vibrateOnSuccess': true,
+        'vibrateOnSuccess': false,
         'scanBlurred': widget.mode == ScannerModes.deblur,
         'scanDeformed': widget.mode == ScannerModes.vin,
+        'enableOCR': widget.mode == ScannerModes.vin,
         'continuousScanning': BarcodeConfigService.isContinuousMode(
           widget.mode,
           _settings,
@@ -562,9 +589,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
             'locationInPreview': true,
             'regionOfInterest': false,
             'beepOnSuccess': true,
-            'vibrateOnSuccess': true,
+            'vibrateOnSuccess': false,
             'scanBlurred': widget.mode == ScannerModes.deblur,
             'scanDeformed': widget.mode == ScannerModes.vin,
+            'enableOCR': widget.mode == ScannerModes.vin,
             'continuousScanning': BarcodeConfigService.isContinuousMode(
               widget.mode,
               _settings,
@@ -587,8 +615,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
   void _continueScanning() {
     setState(() {
       _isScanningPaused = false;
-      _scannedItems.clear();
       _fullCameraImageBytes = null;
+      _isSheetVisible = false;
     });
     // Start scanning again after pause (camera session remains active)
     _barkoder?.startScanning((result) => _handleScanResult(result));
@@ -657,14 +685,45 @@ class _ScannerScreenState extends State<ScannerScreen> {
             },
             onResetConfig: _resetConfig,
           ),
-          if (_scannedItems.isNotEmpty && widget.mode != ScannerModes.arMode)
-            ScanResultCard(
-              item: _scannedItems.first,
-              totalCount: _scannedItems.where((item) => item.text == _scannedItems.first.text).length,
-              totalSessionCount: _scannedItems.length,
-              onCopy: () => _copyToClipboard(_scannedItems.first.text),
-              onExportCSV: _exportToCSV,
-              onSearch: () => _searchBarcode(_scannedItems.first.text),
+          if (_scannedItems.isNotEmpty && _isSheetVisible && widget.mode != ScannerModes.arMode)
+            Positioned(
+              bottom: 0,
+              left: 0,
+              right: 0,
+              child: Dismissible(
+                key: ValueKey(_scannedItems.first.timestamp),
+                direction: DismissDirection.down,
+                onDismissed: (direction) {
+                  setState(() {
+                    _isSheetVisible = false;
+                  });
+                },
+                child: ScanResultCard(
+                  scannedItems: _scannedItems,
+                  decoderResultsCount: _scannedItems.first.count,
+                  onCopy: () => _copyToClipboard(_scannedItems.first.text),
+                  onExportCSV: _exportToCSV,
+                  onSearch: () => _searchBarcode(_scannedItems.first.text),
+                  isDismissible: true,
+                ),
+              ),
+            ),
+          if (_scannedItems.isNotEmpty && _isSheetVisible && isContinuous && widget.mode != ScannerModes.arMode)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 200,
+              child: GestureDetector(
+                onTap: () {
+                  setState(() {
+                    _isSheetVisible = false;
+                  });
+                },
+                child: Container(
+                  color: Colors.transparent,
+                ),
+              ),
             ),
           if (_scannedItems.isEmpty || widget.mode == ScannerModes.arMode)
             ScannerControls(

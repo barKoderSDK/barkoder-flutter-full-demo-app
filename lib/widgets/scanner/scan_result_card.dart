@@ -5,21 +5,21 @@ import '../../models/history_item.dart';
 import '../../services/mrz_parser.dart';
 
 class ScanResultCard extends StatelessWidget {
-  final HistoryItem item;
-  final int totalCount;
-  final int totalSessionCount;
+  final List<HistoryItem> scannedItems;
+  final int decoderResultsCount;
   final VoidCallback onCopy;
   final VoidCallback onExportCSV;
   final VoidCallback onSearch;
+  final bool isDismissible;
 
   const ScanResultCard({
     super.key,
-    required this.item,
-    required this.totalCount,
-    required this.totalSessionCount,
+    required this.scannedItems,
+    required this.decoderResultsCount,
     required this.onCopy,
     required this.onExportCSV,
     required this.onSearch,
+    this.isDismissible = false,
   });
 
   String _getDisplayText(HistoryItem item) {
@@ -47,13 +47,192 @@ class ScanResultCard extends StatelessWidget {
     return item.text;
   }
 
+  int _getItemCount(String text) {
+    return scannedItems.where((item) => item.text == text).length;
+  }
+
+  List<HistoryItem> _getUniqueItems() {
+    final uniqueTexts = <String>{};
+    final uniqueItems = <HistoryItem>[];
+    
+    for (final item in scannedItems) {
+      if (uniqueTexts.add(item.text)) {
+        uniqueItems.add(item);
+      }
+    }
+    
+    return uniqueItems;
+  }
+
+  void _showExpandedView(BuildContext context) {
+    final uniqueItems = _getUniqueItems();
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 1.0,
+        minChildSize: 1.0,
+        maxChildSize: 1.0,
+        builder: (context, scrollController) => Container(
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(16),
+              topRight: Radius.circular(16),
+            ),
+          ),
+          child: Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 32, 20, 16),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    bottom: BorderSide(color: Color(0xFFE0E0E0)),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '$decoderResultsCount result${decoderResultsCount == 1 ? "" : "s"} found (${scannedItems.length} total)',
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Expanded(
+                child: ListView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.all(20),
+                  itemCount: uniqueItems.length,
+                  itemBuilder: (context, index) {
+                    final item = uniqueItems[index];
+                    final count = _getItemCount(item.text);
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: GestureDetector(
+                        onTap: () => context.push('/barcode-details', extra: item),
+                        child: Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD4EDDA),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      item.type,
+                                      style: const TextStyle(
+                                        fontSize: 12,
+                                        color: Color(0xFF6C757D),
+                                        fontWeight: FontWeight.w400,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      _getDisplayText(item),
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.black87,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (count > 1)
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      '($count)',
+                                      style: const TextStyle(
+                                        fontSize: 14,
+                                        fontWeight: FontWeight.w600,
+                                        color: Color(0xFF6C757D),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    const Icon(
+                                      Icons.info_outline,
+                                      size: 20,
+                                      color: Colors.black54,
+                                    ),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+                decoration: const BoxDecoration(
+                  border: Border(
+                    top: BorderSide(color: Color(0xFFE0E0E0)),
+                  ),
+                ),
+                child: SafeArea(
+                  top: false,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceAround,
+                    children: [
+                      _ActionButton(
+                        svgPath: 'assets/icons/icon_copy.svg',
+                        label: 'Copy',
+                        onPressed: () {
+                          Navigator.pop(context);
+                          onCopy();
+                        },
+                      ),
+                      _ActionButton(
+                        svgPath: 'assets/icons/icon_csv.svg',
+                        label: 'CSV',
+                        onPressed: () {
+                          Navigator.pop(context);
+                          onExportCSV();
+                        },
+                      ),
+                      _ActionButton(
+                        svgPath: 'assets/icons/icon_expand.svg',
+                        label: 'Expand',
+                        onPressed: () => Navigator.pop(context),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Positioned(
-      bottom: 0,
-      left: 0,
-      right: 0,
-      child: Container(
+    final totalSessionCount = scannedItems.length;
+    final uniqueItems = _getUniqueItems();
+    
+    final cardContent = Container(
         margin: EdgeInsets.zero,
         padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
         decoration: const BoxDecoration(
@@ -70,7 +249,7 @@ class ScanResultCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                '$totalCount result${totalCount == 1 ? "" : "s"} found ($totalSessionCount total)',
+                '$decoderResultsCount result${decoderResultsCount == 1 ? "" : "s"} found ($totalSessionCount total)',
                 style: const TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w400,
@@ -78,69 +257,76 @@ class ScanResultCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 12),
-              GestureDetector(
-                onTap: () => context.push('/barcode-details', extra: item),
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD4EDDA),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.type,
-                              style: const TextStyle(
-                                fontSize: 12,
-                                color: Color(0xFF6C757D),
-                                fontWeight: FontWeight.w400,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              _getDisplayText(item),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.black87,
-                              ),
-                            ),
-                          ],
-                        ),
+              ...uniqueItems.map((item) {
+                final count = _getItemCount(item.text);
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: GestureDetector(
+                    onTap: () => context.push('/barcode-details', extra: item),
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
                       ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFD4EDDA),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text(
-                            '×$totalCount',
-                            style: const TextStyle(
-                              fontSize: 14,
-                              fontWeight: FontWeight.w600,
-                              color: Color(0xFF6C757D),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  item.type,
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Color(0xFF6C757D),
+                                    fontWeight: FontWeight.w400,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  _getDisplayText(item),
+                                  style: const TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          const Icon(
-                            Icons.info_outline,
-                            size: 20,
-                            color: Colors.black54,
-                          ),
+                          if (count > 1)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  '($count)',
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF6C757D),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                const Icon(
+                                  Icons.info_outline,
+                                  size: 20,
+                                  color: Colors.black54,
+                                ),
+                              ],
+                            ),
                         ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
-              const SizedBox(height: 20),
+                );
+              }).toList(),
+              const SizedBox(height: 8),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
@@ -154,17 +340,27 @@ class ScanResultCard extends StatelessWidget {
                     label: 'CSV',
                     onPressed: onExportCSV,
                   ),
-                  _ActionButton(
-                    svgPath: 'assets/icons/icon_search.svg',
-                    label: 'Search',
-                    onPressed: onSearch,
-                  ),
-                ],
-              ),
-            ],
-          ),
+                _ActionButton(
+                  svgPath: 'assets/icons/icon_expand.svg',
+                  label: 'Expand',
+                  onPressed: () => _showExpandedView(context),
+                ),
+              ],
+            ),
+          ],
         ),
       ),
+    );
+
+    if (isDismissible) {
+      return cardContent;
+    }
+
+    return Positioned(
+      bottom: 0,
+      left: 0,
+      right: 0,
+      child: cardContent,
     );
   }
 }
