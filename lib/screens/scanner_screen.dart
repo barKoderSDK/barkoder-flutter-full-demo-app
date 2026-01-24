@@ -80,6 +80,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         'continuousThreshold': 5,
         'decodingSpeed': DecodingSpeed.normal,
         'resolution': BarkoderResolution.HD,
+        'showResultSheet': true,
         // AR Mode specific settings
         'arMode': BarkoderARMode.interactiveEnabled,
         'arLocationType': BarkoderARLocationType.boundingBox,
@@ -182,7 +183,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
     setState(() {
       _scannedItems.insert(0, item);
-      _isSheetVisible = true;
+      _isSheetVisible = _settings['showResultSheet'] ?? true;
       if (!BarcodeConfigService.isContinuousMode(widget.mode, _settings)) {
         _isScanningPaused = true;
         _fullCameraImageBytes = result.resultImage;
@@ -446,6 +447,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         'continuousThreshold': 5,
         'decodingSpeed': DecodingSpeed.normal,
         'resolution': BarkoderResolution.HD,
+        'showResultSheet': true,
         // AR Mode specific settings
         'arMode': BarkoderARMode.interactiveEnabled,
         'arLocationType': BarkoderARLocationType.boundingBox,
@@ -600,6 +602,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
             'continuousThreshold': 5,
             'decodingSpeed': DecodingSpeed.normal,
             'resolution': BarkoderResolution.HD,
+            'showResultSheet': true,
             // AR Mode specific settings
             'arMode': BarkoderARMode.interactiveEnabled,
             'arLocationType': BarkoderARLocationType.boundingBox,
@@ -725,7 +728,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 ),
               ),
             ),
-          if (_scannedItems.isEmpty || widget.mode == ScannerModes.arMode)
+          if ((_scannedItems.isEmpty || !_isSheetVisible) && widget.mode != ScannerModes.arMode)
             ScannerControls(
               enabledBarcodeTypes: _enabledBarcodeTypes,
               zoomLevel: _zoomLevel,

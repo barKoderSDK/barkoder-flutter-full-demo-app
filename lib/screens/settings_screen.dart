@@ -303,6 +303,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     items.addAll([
       _buildBeepOnSuccessSetting(),
       _buildVibrateOnSuccessSetting(),
+      _buildShowResultSheetSetting(),
     ]);
 
     if (!_isSpecialModeExcluding(['scanBlurred'])) {
@@ -437,6 +438,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
       value: widget.settings['vibrateOnSuccess'] ?? true,
       onChanged: (value) {
         widget.onUpdateSetting('vibrateOnSuccess', value);
+        setState(() {});
+      },
+    );
+  }
+
+  Widget _buildShowResultSheetSetting() {
+    return SettingSwitch(
+      label: 'Show Result Sheet',
+      value: widget.settings['showResultSheet'] ?? true,
+      onChanged: (value) {
+        widget.onUpdateSetting('showResultSheet', value);
         setState(() {});
       },
     );
