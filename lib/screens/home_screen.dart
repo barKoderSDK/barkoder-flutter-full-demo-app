@@ -34,7 +34,6 @@ class _HomeScreenState extends State<HomeScreen> {
     if (_barkoder == null) return;
 
     try {
-      // Configure barkoder with all barcode types enabled
       _barkoder!.setBarcodeTypeEnabled(BarcodeType.aztec, true);
       _barkoder!.setBarcodeTypeEnabled(BarcodeType.aztecCompact, true);
       _barkoder!.setBarcodeTypeEnabled(BarcodeType.qr, true);
@@ -63,7 +62,6 @@ class _HomeScreenState extends State<HomeScreen> {
       _barkoder!.setBarcodeTypeEnabled(BarcodeType.dotcode, true);
       _barkoder!.setBarcodeTypeEnabled(BarcodeType.idDocument, true);
 
-      // Enable image result for gallery scanning
       _barkoder!.setImageResultEnabled(true);
     } catch (e) {
       debugPrint('Error configuring barkoder: $e');
@@ -74,7 +72,6 @@ class _HomeScreenState extends State<HomeScreen> {
     final ImagePicker picker = ImagePicker();
 
     try {
-      // Pick image from gallery
       final XFile? image = await picker.pickImage(source: ImageSource.gallery);
 
       if (image == null) {
@@ -83,20 +80,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (!mounted) return;
 
-      // Show loading after image is selected
       setState(() => _isLoading = true);
 
-      // Read the file and convert it to base64
       final bytes = await image.readAsBytes();
       String base64Image = base64Encode(bytes);
 
       if (!mounted) return;
 
-      // Scan the image directly using the barkoder instance
       if (_barkoder == null) {
         setState(() => _isLoading = false);
         if (mounted) {
           _showResultDialog(
+            // ignore: use_build_context_synchronously
             context,
             success: false,
             text: 'Scanner not initialized. Please try again.',
@@ -115,17 +110,14 @@ class _HomeScreenState extends State<HomeScreen> {
         if (results.isNotEmpty) {
           final decoderResult = results.first;
 
-          // Create a data URI for the image
           final imageDataUri = 'data:image/jpeg;base64,$base64Image';
 
-          // Save to history
           HistoryService.addScan(
             text: decoderResult.textualData,
             type: decoderResult.barcodeTypeName,
             image: imageDataUri,
           );
 
-          // Create HistoryItem with the scanned data
           final historyItem = HistoryItem(
             text: decoderResult.textualData,
             type: decoderResult.barcodeTypeName,
@@ -133,7 +125,6 @@ class _HomeScreenState extends State<HomeScreen> {
             timestamp: DateTime.now().millisecondsSinceEpoch,
           );
 
-          // Navigate to BarcodeDetailsScreen
           Navigator.push(
             context,
             MaterialPageRoute(
@@ -148,6 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() => _isLoading = false);
       if (mounted) {
         _showResultDialog(
+          // ignore: use_build_context_synchronously
           context,
           success: false,
           text: 'Error scanning image: $e',
@@ -296,7 +288,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          // Hidden BarkoderView for background initialization and gallery scanning
           Positioned(
             left: -1,
             top: -1,
@@ -309,11 +300,10 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          // Loading overlay
           if (_isLoading)
             Positioned.fill(
               child: Container(
-                color: Colors.black.withOpacity(0.5),
+                color: Colors.black.withValues(alpha: 0.5),
                 child: Center(
                   child: Container(
                     padding: const EdgeInsets.all(20),

@@ -62,8 +62,10 @@ class SettingDropdown extends StatelessWidget {
                         children: [
                           Radio<dynamic>(
                             value: option['value'],
+                            // ignore: deprecated_member_use
                             groupValue: value,
                             activeColor: const Color(0xFFE52E4C),
+                            // ignore: deprecated_member_use
                             onChanged: (val) {
                               onChanged(val);
                               Navigator.pop(context);

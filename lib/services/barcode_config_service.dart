@@ -8,18 +8,30 @@ class BarcodeConfigService {
       case ScannerModes.mode1D:
         return barcodeTypes1D.map((t) => t['id']!).toList();
       case ScannerModes.mode2D:
-        return barcodeTypes2D.map((t) => t['id']!).where((id) => id != 'idDocument').toList();
+        return barcodeTypes2D
+            .map((t) => t['id']!)
+            .where((id) => id != 'idDocument')
+            .toList();
       case ScannerModes.continuous:
       case ScannerModes.multiscan:
       case ScannerModes.anyscan:
-        // Exclude certain types by default
         final excludedTypes = {
-          'upcE1', 'datalogic25', 'postnet', 'planet',
-          'australianPost', 'kix', 'japanesePost', 'idDocument'
+          'upcE1',
+          'datalogic25',
+          'postnet',
+          'planet',
+          'australianPost',
+          'kix',
+          'japanesePost',
+          'idDocument',
         };
         return [
-          ...barcodeTypes1D.map((t) => t['id']!).where((id) => !excludedTypes.contains(id)),
-          ...barcodeTypes2D.map((t) => t['id']!).where((id) => !excludedTypes.contains(id)),
+          ...barcodeTypes1D
+              .map((t) => t['id']!)
+              .where((id) => !excludedTypes.contains(id)),
+          ...barcodeTypes2D
+              .map((t) => t['id']!)
+              .where((id) => !excludedTypes.contains(id)),
         ];
       case ScannerModes.dotcode:
         return ['dotcode'];
@@ -60,7 +72,9 @@ class BarcodeConfigService {
       case ScannerModes.mode2D:
       case ScannerModes.continuous:
         barkoder.setRegionOfInterest(3, 20, 94, 60);
-        barkoder.setRegionOfInterestVisible(settings['regionOfInterest'] ?? true);
+        barkoder.setRegionOfInterestVisible(
+          settings['regionOfInterest'] ?? true,
+        );
         barkoder.setDecodingSpeed(DecodingSpeed.normal);
         barkoder.setBarkoderResolution(BarkoderResolution.HD);
         break;
@@ -69,7 +83,9 @@ class BarcodeConfigService {
         barkoder.setMulticodeCachingDuration(3000);
         barkoder.setMulticodeCachingEnabled(true);
         barkoder.setRegionOfInterest(3, 20, 94, 60);
-        barkoder.setRegionOfInterestVisible(settings['regionOfInterest'] ?? true);
+        barkoder.setRegionOfInterestVisible(
+          settings['regionOfInterest'] ?? true,
+        );
         barkoder.setDecodingSpeed(DecodingSpeed.normal);
         barkoder.setBarkoderResolution(BarkoderResolution.HD);
         break;
@@ -80,14 +96,6 @@ class BarcodeConfigService {
         barkoder.setDecodingSpeed(DecodingSpeed.slow);
         barkoder.setBarkoderResolution(BarkoderResolution.FHD);
         barkoder.setEnableMisshaped1DEnabled(settings['scanDeformed'] ?? true);
-        // OCR support for VIN
-        if (settings['enableOCR'] == true) {
-          barkoder.setCustomOption('enable_ocr_functionality', 1);
-          barkoder.setBarcodeTypeEnabled(BarcodeType.ocrText, true);
-        } else {
-          barkoder.setCustomOption('enable_ocr_functionality', 0);
-          barkoder.setBarcodeTypeEnabled(BarcodeType.ocrText, false);
-        }
         break;
       case ScannerModes.dpm:
         barkoder.setDatamatrixDpmModeEnabled(true);
@@ -143,6 +151,11 @@ class BarcodeConfigService {
     final displayNames = <String>[];
 
     for (final typeId in typeIds) {
+      if (typeId == 'ocrText') {
+        displayNames.add('OCR Text');
+        continue;
+      }
+
       final type = allTypes.firstWhere(
         (t) => t['id'] == typeId,
         orElse: () => {'id': typeId, 'label': typeId},
@@ -244,8 +257,8 @@ class BarcodeConfigService {
         return 'postalIMB';
       case BarcodeType.idDocument:
         return 'idDocument';
-      default:
-        return 'unknown';
+      case BarcodeType.ocrText:
+        return 'ocrText';
     }
   }
 }

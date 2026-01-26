@@ -1,4 +1,3 @@
-/// Scanner modes
 class ScannerModes {
   static const String anyscan = 'anyscan';
   static const String mode1D = '1d';

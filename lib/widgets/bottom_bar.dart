@@ -28,7 +28,6 @@ class BottomBar extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              // Recent button
               InkWell(
                 onTap: () => context.push('/history'),
                 child: Column(
@@ -47,7 +46,6 @@ class BottomBar extends StatelessWidget {
                   ],
                 ),
               ),
-              // About button
               InkWell(
                 onTap: () => context.push('/about'),
                 child: Column(
@@ -69,7 +67,6 @@ class BottomBar extends StatelessWidget {
             ],
           ),
         ),
-        // Anyscan button
         Positioned(
           bottom: 40,
           child: InkWell(

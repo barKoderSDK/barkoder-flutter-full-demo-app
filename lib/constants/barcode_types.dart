@@ -1,4 +1,3 @@
-/// Barcode types definitions
 const List<Map<String, String>> barcodeTypes1D = [
   {'id': 'australianPost', 'label': 'Australian Post'},
   {'id': 'codabar', 'label': 'Codabar'},
@@ -47,8 +46,11 @@ const List<Map<String, String>> barcodeTypes2D = [
 
 bool is1DBarcodeType(String type) {
   final normalized = type.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase();
-  return barcodeTypes1D.any((t) => 
-    t['label']!.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase() == normalized ||
-    t['id']!.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase() == normalized
+  return barcodeTypes1D.any(
+    (t) =>
+        t['label']!.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase() ==
+            normalized ||
+        t['id']!.replaceAll(RegExp(r'[^a-zA-Z0-9]'), '').toLowerCase() ==
+            normalized,
   );
 }

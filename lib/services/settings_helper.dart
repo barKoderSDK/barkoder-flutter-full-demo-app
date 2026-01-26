@@ -15,6 +15,7 @@ class SettingsHelper {
           {'id': 'code128', 'label': 'Code 128'},
           {'id': 'qr', 'label': 'QR'},
           {'id': 'datamatrix', 'label': 'Data Matrix'},
+          {'id': 'ocrText', 'label': 'OCR Text'},
         ];
       case ScannerModes.mrz:
         return [];

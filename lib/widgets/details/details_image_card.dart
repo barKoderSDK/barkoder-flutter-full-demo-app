@@ -12,7 +12,6 @@ class DetailsImageCard extends StatelessWidget {
       return Icon(Icons.image_outlined, size: 80, color: Colors.grey.shade300);
     }
 
-    // Check if it's a base64 data URI
     if (imagePath!.startsWith('data:image')) {
       try {
         final base64String = imagePath!.split(',')[1];
@@ -30,7 +29,6 @@ class DetailsImageCard extends StatelessWidget {
       }
     }
 
-    // Check if it's a file path
     if (File(imagePath!).existsSync()) {
       return ClipRRect(
         borderRadius: BorderRadius.circular(8),

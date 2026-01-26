@@ -314,11 +314,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       items.add(_buildScanDeformedSetting());
     }
 
-    // Add OCR setting for VIN mode
-    if (mode == ScannerModes.vin) {
-      items.add(_buildEnableOCRSetting());
-    }
-
     if (mode != ScannerModes.arMode) {
       items.add(_buildContinuousScanSetting());
 
@@ -327,7 +322,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
 
-    // Add AR Mode specific settings
     if (mode == ScannerModes.arMode) {
       items.addAll([
         _buildARModeSetting(),
@@ -476,17 +470,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildEnableOCRSetting() {
-    return SettingSwitch(
-      label: 'Enable OCR (Text Recognition)',
-      value: widget.settings['enableOCR'] ?? false,
-      onChanged: (value) {
-        widget.onUpdateSetting('enableOCR', value);
-        setState(() {});
-      },
-    );
-  }
-
   Widget _buildContinuousScanSetting() {
     return SettingSwitch(
       label: 'Continuous Scanning',
@@ -568,7 +551,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return items;
   }
 
-  // AR Mode specific settings
   Widget _buildARModeSetting() {
     return SettingDropdown(
       label: 'AR Mode',

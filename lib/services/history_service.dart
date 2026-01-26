@@ -1,3 +1,5 @@
+// ignore_for_file: avoid_print
+
 import 'dart:convert';
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -7,7 +9,6 @@ import '../models/history_item.dart';
 class HistoryService {
   static const String _historyKey = 'scan_history';
 
-  /// Retrieves all scan history items
   static Future<List<HistoryItem>> getHistory() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -22,7 +23,6 @@ class HistoryService {
     }
   }
 
-  /// Adds a new scan to history or updates an existing entry
   static Future<void> addScan({
     required String text,
     required String type,
@@ -31,18 +31,15 @@ class HistoryService {
     try {
       String? imagePath = image;
 
-      // If image is base64, save to file
       if (image != null && image.startsWith('data:image')) {
         final timestamp = DateTime.now().millisecondsSinceEpoch;
         final fileName = 'scan_$timestamp.jpg';
         final directory = await getApplicationDocumentsDirectory();
         final filePath = '${directory.path}/$fileName';
         
-        // Extract base64 data
         final base64Data = image.split(';base64,').last;
         final bytes = base64Decode(base64Data);
         
-        // Write to file
         final file = File(filePath);
         await file.writeAsBytes(bytes);
         imagePath = filePath;
@@ -54,7 +51,6 @@ class HistoryService {
       );
 
       if (existingIndex >= 0) {
-        // Update existing item
         final existing = history[existingIndex];
         history[existingIndex] = existing.copyWith(
           count: existing.count + 1,
@@ -62,11 +58,9 @@ class HistoryService {
           image: imagePath ?? existing.image,
         );
         
-        // Move to front
         final updated = history.removeAt(existingIndex);
         history.insert(0, updated);
       } else {
-        // Add new item at the beginning
         history.insert(
           0,
           HistoryItem(
@@ -79,7 +73,6 @@ class HistoryService {
         );
       }
 
-      // Save to preferences
       final prefs = await SharedPreferences.getInstance();
       final encoded = jsonEncode(history.map((h) => h.toJson()).toList());
       await prefs.setString(_historyKey, encoded);
@@ -88,10 +81,8 @@ class HistoryService {
     }
   }
 
-  /// Clears all scan history
   static Future<void> clearHistory() async {
     try {
-      // Delete all scan images
       final history = await getHistory();
       
       for (final item in history) {
@@ -107,7 +98,6 @@ class HistoryService {
         }
       }
 
-      // Clear preferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove(_historyKey);
     } catch (e) {

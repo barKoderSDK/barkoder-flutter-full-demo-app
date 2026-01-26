@@ -28,6 +28,7 @@ class ScannerScreen extends StatefulWidget {
 
 class _ScannerScreenState extends State<ScannerScreen> {
   Barkoder? _barkoder;
+  // ignore: prefer_final_fields
   List<HistoryItem> _scannedItems = [];
   bool _isFlashOn = false;
   bool _isScanningPaused = false;
@@ -42,7 +43,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
   @override
   void initState() {
     super.initState();
-    _loadSavedSettings();
   }
 
   @override
@@ -51,8 +51,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
     super.dispose();
   }
 
-  void _onBarkoderViewCreated(Barkoder barkoder) {
+  void _onBarkoderViewCreated(Barkoder barkoder) async {
     _barkoder = barkoder;
+    await _loadSavedSettings();
     _configureBarkoderView();
   }
 
@@ -94,7 +95,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         .where((entry) => entry.value)
         .map((entry) => entry.key)
         .toList();
-    
+
     setState(() {
       _enabledBarcodeTypes = BarcodeConfigService.getEnabledTypesDisplayNames(
         enabledTypeIds,
@@ -139,6 +140,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
     for (final typeId in enabledTypeIds) {
       final type = BarcodeConfigService.getBarcodeTypeFromId(typeId);
       _barkoder!.setBarcodeTypeEnabled(type, true);
+      if (widget.mode == ScannerModes.vin && typeId == 'ocrText') {
+        _barkoder!.setCustomOption('enable_ocr_functionality', 1);
+      }
     }
 
     BarcodeConfigService.applyModeSpecificSettings(
@@ -255,7 +259,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
 
       HistoryService.addScan(text: text, type: type, image: imagePath);
     } catch (e) {
-      // Silent error handling
+      // Ignore errors in saving images
     }
   }
 
@@ -346,7 +350,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         break;
       case 'regionOfInterest':
         _barkoder!.stopScanning();
-        
+
         if (value) {
           if (widget.mode == ScannerModes.vin) {
             _barkoder!.setRegionOfInterest(0, 35, 100, 30);
@@ -355,10 +359,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
           } else if (widget.mode == ScannerModes.dotcode) {
             _barkoder!.setRegionOfInterest(30, 40, 40, 9);
           } else if (widget.mode == ScannerModes.anyscan ||
-                     widget.mode == ScannerModes.mode1D ||
-                     widget.mode == ScannerModes.mode2D ||
-                     widget.mode == ScannerModes.continuous ||
-                     widget.mode == ScannerModes.multiscan) {
+              widget.mode == ScannerModes.mode1D ||
+              widget.mode == ScannerModes.mode2D ||
+              widget.mode == ScannerModes.continuous ||
+              widget.mode == ScannerModes.multiscan) {
             _barkoder!.setRegionOfInterest(3, 20, 94, 60);
           } else {
             _barkoder!.setRegionOfInterest(3, 20, 94, 60);
@@ -367,7 +371,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
         } else {
           _barkoder!.setRegionOfInterestVisible(false);
         }
-        
+
         _startScanning();
         break;
       case 'beepOnSuccess':
@@ -381,12 +385,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
         break;
       case 'scanDeformed':
         _barkoder!.setEnableMisshaped1DEnabled(value);
-        break;
-      case 'enableOCR':
-        if (widget.mode == ScannerModes.vin) {
-          _barkoder!.setCustomOption('enable_ocr_functionality', value ? 1 : 0);
-          _barkoder!.setBarcodeTypeEnabled(BarcodeType.ocrText, value);
-        }
         break;
       case 'continuousScanning':
         _barkoder!.setCloseSessionOnResultEnabled(!value);
@@ -439,7 +437,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
         'vibrateOnSuccess': false,
         'scanBlurred': widget.mode == ScannerModes.deblur,
         'scanDeformed': widget.mode == ScannerModes.vin,
-        'enableOCR': widget.mode == ScannerModes.vin,
         'continuousScanning': BarcodeConfigService.isContinuousMode(
           widget.mode,
           _settings,
@@ -594,7 +591,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
             'vibrateOnSuccess': false,
             'scanBlurred': widget.mode == ScannerModes.deblur,
             'scanDeformed': widget.mode == ScannerModes.vin,
-            'enableOCR': widget.mode == ScannerModes.vin,
             'continuousScanning': BarcodeConfigService.isContinuousMode(
               widget.mode,
               _settings,
@@ -603,7 +599,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
             'decodingSpeed': DecodingSpeed.normal,
             'resolution': BarkoderResolution.HD,
             'showResultSheet': true,
-            // AR Mode specific settings
             'arMode': BarkoderARMode.interactiveEnabled,
             'arLocationType': BarkoderARLocationType.boundingBox,
             'arHeaderShowMode': BarkoderARHeaderShowMode.onSelected,
@@ -621,7 +616,6 @@ class _ScannerScreenState extends State<ScannerScreen> {
       _fullCameraImageBytes = null;
       _isSheetVisible = false;
     });
-    // Start scanning again after pause (camera session remains active)
     _barkoder?.startScanning((result) => _handleScanResult(result));
   }
 
@@ -679,6 +673,12 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 BarcodeConfigService.getBarcodeTypeFromId(typeId),
                 enabled,
               );
+              if (widget.mode == ScannerModes.vin && typeId == 'ocrText') {
+                _barkoder?.setCustomOption(
+                  'enable_ocr_functionality',
+                  enabled ? 1 : 0,
+                );
+              }
               _saveSettings();
             },
             onUpdateSetting: (key, value) {
@@ -688,7 +688,9 @@ class _ScannerScreenState extends State<ScannerScreen> {
             },
             onResetConfig: _resetConfig,
           ),
-          if (_scannedItems.isNotEmpty && _isSheetVisible && widget.mode != ScannerModes.arMode)
+          if (_scannedItems.isNotEmpty &&
+              _isSheetVisible &&
+              widget.mode != ScannerModes.arMode)
             Positioned(
               bottom: 0,
               left: 0,
@@ -711,7 +713,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
                 ),
               ),
             ),
-          if (_scannedItems.isNotEmpty && _isSheetVisible && isContinuous && widget.mode != ScannerModes.arMode)
+          if (_scannedItems.isNotEmpty &&
+              _isSheetVisible &&
+              isContinuous &&
+              widget.mode != ScannerModes.arMode)
             Positioned(
               top: 0,
               left: 0,
@@ -723,12 +728,11 @@ class _ScannerScreenState extends State<ScannerScreen> {
                     _isSheetVisible = false;
                   });
                 },
-                child: Container(
-                  color: Colors.transparent,
-                ),
+                child: Container(color: Colors.transparent),
               ),
             ),
-          if ((_scannedItems.isEmpty || !_isSheetVisible) && widget.mode != ScannerModes.arMode)
+          if ((_scannedItems.isEmpty || !_isSheetVisible) &&
+              widget.mode != ScannerModes.arMode)
             ScannerControls(
               enabledBarcodeTypes: _enabledBarcodeTypes,
               zoomLevel: _zoomLevel,
