@@ -10,9 +10,46 @@ import '../widgets/bottom_bar.dart';
 import '../widgets/home_grid.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:convert';
+import 'dart:async';
 import '../models/history_item.dart';
 import '../services/history_service.dart';
 import 'barcode_details_screen.dart';
+
+void _configureBarkoderForGallery(Barkoder barkoder) {
+  try {
+    barkoder.setBarcodeTypeEnabled(BarcodeType.aztec, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.aztecCompact, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.qr, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.qrMicro, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.code128, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.code93, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.code39, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.codabar, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.code11, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.msi, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.upcA, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.upcE, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.ean13, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.ean8, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.pdf417, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.pdf417Micro, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.datamatrix, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.code25, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.interleaved25, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.itf14, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.iata25, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.matrix25, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.coop25, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.code32, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.telepen, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.dotcode, true);
+    barkoder.setBarcodeTypeEnabled(BarcodeType.idDocument, true);
+    barkoder.setDecodingSpeed(DecodingSpeed.rigorous);
+    barkoder.setImageResultEnabled(true);
+  } catch (e) {
+    debugPrint('Error configuring barkoder: $e');
+  }
+}
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -22,51 +59,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Barkoder? _barkoder;
   bool _isLoading = false;
-
-  void _onBarkoderViewCreated(Barkoder barkoder) {
-    _barkoder = barkoder;
-    _configureBarkoder();
-  }
-
-  void _configureBarkoder() async {
-    if (_barkoder == null) return;
-
-    try {
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.aztec, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.aztecCompact, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.qr, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.qrMicro, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.code128, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.code93, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.code39, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.codabar, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.code11, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.msi, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.upcA, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.upcE, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.ean13, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.ean8, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.pdf417, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.pdf417Micro, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.datamatrix, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.code25, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.interleaved25, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.itf14, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.iata25, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.matrix25, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.coop25, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.code32, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.telepen, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.dotcode, true);
-      _barkoder!.setBarcodeTypeEnabled(BarcodeType.idDocument, true);
-
-      _barkoder!.setImageResultEnabled(true);
-    } catch (e) {
-      debugPrint('Error configuring barkoder: $e');
-    }
-  }
 
   Future<void> _handleGalleryScan(BuildContext context) async {
     final ImagePicker picker = ImagePicker();
@@ -87,54 +80,57 @@ class _HomeScreenState extends State<HomeScreen> {
 
       if (!mounted) return;
 
-      if (_barkoder == null) {
-        setState(() => _isLoading = false);
-        if (mounted) {
-          _showResultDialog(
-            // ignore: use_build_context_synchronously
-            context,
-            success: false,
-            text: 'Scanner not initialized. Please try again.',
+      await showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) {
+          return _GalleryScanRunner(
+            base64Image: base64Image,
+            onTimeout: () {
+              if (!mounted) return;
+              setState(() => _isLoading = false);
+              _showResultDialog(
+                context,
+                success: false,
+                text: 'Scanning timed out. Please try again.',
+              );
+            },
+            onResult: (result) {
+              if (!mounted) return;
+              setState(() => _isLoading = false);
+
+              final results = result.decoderResults;
+              if (results.isNotEmpty) {
+                final decoderResult = results.first;
+                final imageDataUri = 'data:image/jpeg;base64,$base64Image';
+
+                HistoryService.addScan(
+                  text: decoderResult.textualData,
+                  type: decoderResult.barcodeTypeName,
+                  image: imageDataUri,
+                );
+
+                final historyItem = HistoryItem(
+                  text: decoderResult.textualData,
+                  type: decoderResult.barcodeTypeName,
+                  image: imageDataUri,
+                  timestamp: DateTime.now().millisecondsSinceEpoch,
+                );
+
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        BarcodeDetailsScreen(item: historyItem),
+                  ),
+                );
+              } else {
+                _showNoBarcodeDialog(context);
+              }
+            },
           );
-        }
-        return;
-      }
-
-      _barkoder!.scanImage((BarkoderResult result) {
-        setState(() => _isLoading = false);
-
-        if (!mounted) return;
-
-        final results = result.decoderResults;
-
-        if (results.isNotEmpty) {
-          final decoderResult = results.first;
-
-          final imageDataUri = 'data:image/jpeg;base64,$base64Image';
-
-          HistoryService.addScan(
-            text: decoderResult.textualData,
-            type: decoderResult.barcodeTypeName,
-            image: imageDataUri,
-          );
-
-          final historyItem = HistoryItem(
-            text: decoderResult.textualData,
-            type: decoderResult.barcodeTypeName,
-            image: imageDataUri,
-            timestamp: DateTime.now().millisecondsSinceEpoch,
-          );
-
-          Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (context) => BarcodeDetailsScreen(item: historyItem),
-            ),
-          );
-        } else {
-          _showNoBarcodeDialog(context);
-        }
-      }, base64Image);
+        },
+      );
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
@@ -288,18 +284,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
-          Positioned(
-            left: -1,
-            top: -1,
-            child: SizedBox(
-              width: 1,
-              height: 1,
-              child: BarkoderView(
-                licenseKey: dotenv.env['BARKODER_LICENSE_KEY'] ?? '',
-                onBarkoderViewCreated: _onBarkoderViewCreated,
-              ),
-            ),
-          ),
           if (_isLoading)
             Positioned.fill(
               child: Container(
@@ -330,6 +314,87 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
         ],
+      ),
+    );
+  }
+}
+
+class _GalleryScanRunner extends StatefulWidget {
+  final String base64Image;
+  final ValueChanged<BarkoderResult> onResult;
+  final VoidCallback onTimeout;
+
+  const _GalleryScanRunner({
+    required this.base64Image,
+    required this.onResult,
+    required this.onTimeout,
+  });
+
+  @override
+  State<_GalleryScanRunner> createState() => _GalleryScanRunnerState();
+}
+
+class _GalleryScanRunnerState extends State<_GalleryScanRunner> {
+  Barkoder? _barkoder;
+  Timer? _timeout;
+  bool _didReturn = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _timeout = Timer(const Duration(seconds: 8), _handleTimeout);
+  }
+
+  @override
+  void dispose() {
+    _barkoder?.stopScanning();
+    _timeout?.cancel();
+    super.dispose();
+  }
+
+  void _handleTimeout() {
+    if (_didReturn) return;
+    _didReturn = true;
+    _barkoder?.stopScanning();
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
+    widget.onTimeout();
+  }
+
+  void _handleResult(BarkoderResult result) {
+    if (_didReturn) return;
+    _didReturn = true;
+    _barkoder?.stopScanning();
+    _timeout?.cancel();
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
+    widget.onResult(result);
+  }
+
+  void _onBarkoderViewCreated(Barkoder barkoder) {
+    _barkoder = barkoder;
+    _configureBarkoderForGallery(barkoder);
+    barkoder.scanImage(_handleResult, widget.base64Image);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      type: MaterialType.transparency,
+      child: Center(
+        child: SizedBox(
+          width: 10,
+          height: 10,
+          child: Opacity(
+            opacity: 0.01,
+            child: BarkoderView(
+              licenseKey: dotenv.env['BARKODER_LICENSE_KEY'] ?? '',
+              onBarkoderViewCreated: _onBarkoderViewCreated,
+            ),
+          ),
+        ),
       ),
     );
   }

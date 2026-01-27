@@ -13,9 +13,9 @@ import '../models/history_item.dart';
 import '../constants/modes.dart';
 import '../widgets/scanner/scanner_top_bar.dart';
 import '../widgets/scanner/scanner_overlay.dart';
-import '../widgets/scanner/continue_scanning_banner.dart';
 import '../widgets/scanner/scan_result_card.dart';
 import '../widgets/scanner/scanner_controls.dart';
+import '../widgets/scanner/continue_scanning_banner.dart';
 
 class ScannerScreen extends StatefulWidget {
   final String mode;
@@ -620,7 +620,7 @@ class _ScannerScreenState extends State<ScannerScreen> {
   }
 
   void _pauseScanningForSettings() {
-    _barkoder?.pauseScanning();
+    _barkoder?.stopScanning();
   }
 
   void _resumeScanningFromSettings() {
@@ -649,7 +649,10 @@ class _ScannerScreenState extends State<ScannerScreen> {
               imageBytes: _fullCameraImageBytes,
               onTap: _continueScanning,
             ),
-          if (_isScanningPaused && !isContinuous && _scannedItems.isNotEmpty)
+          if (_isScanningPaused &&
+              !isContinuous &&
+              _scannedItems.isNotEmpty &&
+              !_isSheetVisible)
             ContinueScanningBanner(onTap: _continueScanning),
           ScannerTopBar(
             mode: widget.mode,
@@ -710,6 +713,8 @@ class _ScannerScreenState extends State<ScannerScreen> {
                   onExportCSV: _exportToCSV,
                   onSearch: () => _searchBarcode(_scannedItems.first.text),
                   isDismissible: true,
+                  showContinueBanner: _isScanningPaused && !isContinuous,
+                  onContinueTap: _continueScanning,
                 ),
               ),
             ),
