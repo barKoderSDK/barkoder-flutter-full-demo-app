@@ -192,6 +192,5 @@ This is a recreation of the Barkoder demo app. Please ensure you have appropriat
 
 For Barkoder SDK support:
 - Website: https://barkoder.com/
-- Documentation: https://docs.barkoder.com/
-- Contact: https://barkoder.com/contact
+- Documentation: https://barkoder.com/docs/v1/flutter/flutter-example
 
